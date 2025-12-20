@@ -4,38 +4,46 @@ A modern, unix-like CLI for managing your Seedr.cc account.
 
 ## Installation
 
-Ensure you have `uv` installed, then:
+To install `seedr-cli` globally so you can run it from anywhere:
 
 ```bash
-uv sync
+uv tool install .
+```
+
+If you are developing and want changes to reflect immediately:
+
+```bash
+uv tool install --editable .
 ```
 
 ## Usage
 
+Once installed, you can use the command directly:
+
 ### List Contents
 Show your files and folders in a tree view.
 ```bash
-uv run python main.py list
+seedr-cli list
 ```
 
 ### Fetch a File
 Get the download URL for a file by its ID.
 ```bash
-uv run python main.py fetch <FILE_ID>
+seedr-cli fetch <FILE_ID>
 ```
 
 ### Delete an Item
 Delete a file, folder, or torrent.
 ```bash
-uv run python main.py delete <type: file|folder|torrent> <ID>
+seedr-cli delete <type: file|folder|torrent> <ID>
 ```
 
-### Add a Torrent (Placeholder)
+### Add a Torrent
 ```bash
-uv run python main.py add "magnet:..."
+seedr-cli add "magnet:..."
 ```
 
 ### Help
 ```bash
-uv run python main.py help
+seedr-cli help
 ```
