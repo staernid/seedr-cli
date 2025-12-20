@@ -31,6 +31,23 @@ def get_node_display(node):
         return f"\033[1;33m[TOR]\033[0m  {node.name:<40} ({format_size(node.size)}) [ID: {node.id}]"
     return str(node)
 
+def find_item_by_id(client, target_id):
+    """Try to find an item by ID in the root contents to identify its type and name."""
+    try:
+        contents = client.list_contents()
+        for f in contents.folders:
+            if str(f.id) == str(target_id):
+                return "folder", f.name
+        for f in contents.files:
+            if str(f.folder_file_id) == str(target_id):
+                return "file", f.name
+        for t in contents.torrents:
+            if str(t.id) == str(target_id):
+                return "torrent", t.name
+    except:
+        pass
+    return None, None
+
 def enumerate_tree(client, node, prefix: str = "", is_last: bool = True, depth: int = 0, max_depth: int = 2):
     """Recursively print the tree structure."""
     connector = "└── " if is_last else "├── "
@@ -86,22 +103,64 @@ def cmd_delete(args):
     """Handle the 'delete' command."""
     client = get_client()
     with client:
-        print(f"[*] Deleting {args.type} ID: {args.id}")
-        confirm = input(f"[?] Are you sure you want to delete this {args.type}? [y/N] ").lower()
+        # Determine ID and Type based on arguments
+        if args.identifier in ["file", "folder", "torrent"]:
+            item_type = args.identifier
+            target_id = args.id_if_type
+            if not target_id:
+                print(f"\033[1;31mError:\033[0m ID required when type is specified.")
+                return
+        else:
+            target_id = args.identifier
+            item_type = args.id_if_type
+            if item_type and item_type not in ["file", "folder", "torrent"]:
+                # Second argument provided but not a valid type, ignore it
+                item_type = None
+
+        item_name = None
+        # Try to identify the item for better UX (resolve name even if type is known)
+        found_type, found_name = find_item_by_id(client, target_id)
+        
+        if not item_type:
+            item_type = found_type
+        
+        item_name = found_name
+
+        display_type = item_type or "item"
+        display_name = f" '{item_name}'" if item_name else ""
+        
+        print(f"[*] Deleting {display_type}{display_name} (ID: {target_id})")
+        confirm = input(f"[?] Are you sure you want to delete this {display_type}? [y/N] ").lower()
         if confirm != 'y':
             print("[*] Aborted.")
             return
 
-        try:
-            method_name = f"delete_{args.type}"
-            if not hasattr(client, method_name):
-                print(f"\033[1;31mError:\033[0m Unknown type '{args.type}'. Use: folder, file, or torrent.")
+        # If we know the type (or think we do), try it first
+        if item_type:
+            try:
+                method = getattr(client, f"delete_{item_type}")
+                method(target_id)
+                print(f"\033[1;32mSuccessfully deleted {item_type} {target_id}\033[0m")
                 return
-            
-            getattr(client, method_name)(args.id)
-            print(f"\033[1;32mSuccessfully deleted {args.type} {args.id}\033[0m")
-        except Exception as e:
-            print(f"\033[1;31mError:\033[0m {e}")
+            except Exception as e:
+                # If auto-detected, maybe it was wrong? Try fallback if so.
+                if args.identifier in ["file", "folder", "torrent"]:
+                    print(f"\033[1;31mError:\033[0m {e}")
+                    return
+
+        # Fallback/Unknown type: try all methods
+        success = False
+        for t in ["folder", "file", "torrent"]:
+            try:
+                getattr(client, f"delete_{t}")(target_id)
+                print(f"\033[1;32mSuccessfully deleted as {t} {target_id}\033[0m")
+                success = True
+                break
+            except:
+                continue
+        
+        if not success:
+            print(f"\033[1;31mError:\033[0m Could not find or delete item with ID {target_id}")
 
 def cmd_add(args):
     """Handle the 'add' command (placeholder)."""
@@ -129,9 +188,9 @@ def main():
     fetch_parser.set_defaults(func=cmd_fetch)
 
     # Delete command
-    delete_parser = subparsers.add_parser("delete", help="Delete a file, folder, or torrent")
-    delete_parser.add_argument("type", choices=["file", "folder", "torrent"], help="Type of item to delete")
-    delete_parser.add_argument("id", help="The ID of the item to delete")
+    delete_parser = subparsers.add_parser("delete", help="Delete a file, folder, or torrent (type optional)")
+    delete_parser.add_argument("identifier", help="The ID of the item, or the type (file/folder/torrent)")
+    delete_parser.add_argument("id_if_type", nargs="?", help="The ID of the item (if type was provided first)")
     delete_parser.set_defaults(func=cmd_delete)
 
     # Add command
