@@ -1,0 +1,25 @@
+[project]
+name = "seedr-thing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "seedrcc",
+]
+
+[project.scripts]
+seedr-cli = "main:main"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main", "utils"]
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+seedrcc = { git = "https://github.com/hemantapkh/seedrcc.git" }

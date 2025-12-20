@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+.venv/
+.tox/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# VS Code
+.vscode/
+
+# Project specific
+.python-version
+.env
+*.token
+*.txt
+!README.md
