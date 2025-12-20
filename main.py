@@ -86,18 +86,46 @@ def cmd_list(args):
             enumerate_tree(client, child, "", i == len(children) - 1, max_depth=args.depth)
 
 def cmd_fetch(args):
-    """Handle the 'fetch' command."""
+    """Handle the 'fetch' command. Supports both files and folders (via zip archive)."""
     client = get_client()
     with client:
-        print(f"[*] Fetching file ID: {args.id}")
+        print(f"[*] Fetching ID: {args.id}")
+        
+        # 1. Try as file first
         try:
             result = client.fetch_file(args.id)
-            print(f"\n\033[1;32mName:\033[0m {result.name}")
-            print(f"\033[1;32mURL:\033[0m  {result.url}")
-            print(f"\nTo download:")
-            print(f"wget '{result.url}' -O '{sanitize_filename(result.name)}'")
-        except Exception as e:
-            print(f"\033[1;31mError:\033[0m {e}")
+            if hasattr(result, 'url') and result.url:
+                print(f"\n\033[1;32mType:\033[0m File")
+                print(f"\033[1;32mName:\033[0m {result.name}")
+                print(f"\033[1;32mURL:\033[0m  {result.url}")
+                print(f"\nTo download:")
+                base_name = sanitize_filename(result.name)
+                print(f"wget '{result.url}' -O '{base_name}'")
+                return
+        except Exception:
+            pass
+        
+        # 2. Try as folder (archive)
+        try:
+            # We try to get folder info first to confirm it's a folder and get its name
+            folder_info = client.list_contents(args.id)
+            if folder_info:
+                # If we got here, it's likely a folder
+                print(f"[*] ID {args.id} identified as folder: {folder_info.name or 'Root'}")
+                archive_result = client.create_archive(args.id)
+                if archive_result.result:
+                    name = folder_info.name if folder_info.name else f"folder_{args.id}"
+                    print(f"\n\033[1;32mType:\033[0m Folder (Archive)")
+                    print(f"\033[1;32mName:\033[0m {name}.zip")
+                    print(f"\033[1;32mURL:\033[0m  {archive_result.archive_url}")
+                    print(f"\nTo download:")
+                    safe_name = sanitize_filename(name)
+                    print(f"wget '{archive_result.archive_url}' -O '{safe_name}.zip'")
+                    return
+        except Exception:
+            pass
+
+        print(f"\033[1;31mError:\033[0m Could not fetch item with ID {args.id} (tried as file and folder)")
 
 def cmd_delete(args):
     """Handle the 'delete' command."""
@@ -183,8 +211,8 @@ def main():
     list_parser.set_defaults(func=cmd_list)
 
     # Fetch command
-    fetch_parser = subparsers.add_parser("fetch", help="Get download link for a file")
-    fetch_parser.add_argument("id", help="The ID of the file to fetch")
+    fetch_parser = subparsers.add_parser("fetch", help="Get download link for a file or folder (as zip)")
+    fetch_parser.add_argument("id", help="The ID of the file or folder to fetch")
     fetch_parser.set_defaults(func=cmd_fetch)
 
     # Delete command
