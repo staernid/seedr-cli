@@ -1,22 +1,24 @@
 [project]
-name = "seedr-thing"
+name = "seedrcc-tui"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "seedrcc",
+    "textual>=6.11.0",
 ]
 
 [project.scripts]
-seedr-cli = "main:main"
+seedrcc-tui = "main:main"
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["main", "utils"]
+packages = ["seedrcc_tui"]
+py-modules = ["main"]
 
 [tool.uv]
 package = true

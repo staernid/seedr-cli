@@ -1,10 +1,10 @@
-# Seedr CLI
+# SeedrCC TUI
 
-A modern, unix-like CLI for managing your Seedr.cc account.
+A modern, unix-like CLI and TUI for managing your Seedr.cc account.
 
 ## Installation
 
-To install `seedr-cli` globally so you can run it from anywhere:
+To install `seedrcc-tui` globally so you can run it from anywhere:
 
 ```bash
 uv tool install .
@@ -23,27 +23,27 @@ Once installed, you can use the command directly:
 ### List Contents
 Show your files and folders in a tree view.
 ```bash
-seedr-cli list
+seedrcc-tui list
 ```
 
 ### Fetch a File
 Get the download URL for a file by its ID.
 ```bash
-seedr-cli fetch <FILE_ID>
+seedrcc-tui fetch <FILE_ID>
 ```
 
 ### Delete an Item
 Delete a file, folder, or torrent.
 ```bash
-seedr-cli delete <type: file|folder|torrent> <ID>
+seedrcc-tui delete <type: file|folder|torrent> <ID>
 ```
 
 ### Add a Torrent
 ```bash
-seedr-cli add "magnet:..."
+seedrcc-tui add "magnet:..."
 ```
 
 ### Help
 ```bash
-seedr-cli help
+seedrcc-tui help
 ```
